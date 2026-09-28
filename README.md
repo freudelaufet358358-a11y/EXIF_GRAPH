@@ -44,4 +44,4 @@ npm run serve     # http://localhost:8000 でプレビュー
 
 ## デプロイ
 
-`.github/workflows/pages.yml` がテストを実行し、デフォルトブランチへの push で `site/` を GitHub Pages に公開します（リポジトリの Settings → Pages → Source は「GitHub Actions」）。
+`.github/workflows/pages.yml` がすべての push でテストを実行し、`main` ブランチへの push（または手動実行）で `site/` を GitHub Pages に公開します（リポジトリの Settings → Pages → Source は「GitHub Actions」）。

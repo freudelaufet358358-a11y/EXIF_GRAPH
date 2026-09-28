@@ -23,10 +23,8 @@ jobs:
       - run: npm test
 
   deploy:
-    # Publish only from the default branch (or when run by hand).
-    if: >-
-      github.event_name == 'workflow_dispatch' ||
-      (github.event_name == 'push' && github.ref_name == github.event.repository.default_branch)
+    # Publish only from main (the github-pages environment only allows main).
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
     needs: test
     runs-on: ubuntu-latest
     permissions:
