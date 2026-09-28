@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>EXIF Graph</title>
+  <meta name="description" content="大量の写真のEXIFを読み込んで、よく使う焦点距離・絞り・シャッター速度・ISOなどをまとめて分析します。写真はブラウザの外に送信されません。">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='3' y='16' width='5' height='13' rx='1.5' fill='%232a78d6'/%3E%3Crect x='10' y='6' width='5' height='23' rx='1.5' fill='%232a78d6'/%3E%3Crect x='17' y='11' width='5' height='18' rx='1.5' fill='%232a78d6'/%3E%3Crect x='24' y='20' width='5' height='9' rx='1.5' fill='%232a78d6'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="css/style.css">
+  <script type="module" src="js/app.js"></script>
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true">
+        <rect x="3" y="16" width="5" height="13" rx="1.5"/>
+        <rect x="10" y="6" width="5" height="23" rx="1.5"/>
+        <rect x="17" y="11" width="5" height="18" rx="1.5"/>
+        <rect x="24" y="20" width="5" height="9" rx="1.5"/>
+      </svg>
+      <div>
+        <h1>EXIF Graph</h1>
+        <p class="tagline">写真の撮影データから「いつもの設定」を見える化</p>
+      </div>
+    </div>
+    <button id="theme-toggle" class="btn ghost small" type="button"></button>
+  </header>
+
+  <main>
+    <section class="intake" aria-label="写真の読み込み">
+      <div id="dropzone" class="dropzone">
+        <svg class="dz-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7.5A2.5 2.5 0 0 1 6.5 5h2.2l1.2-1.6A1 1 0 0 1 10.7 3h2.6a1 1 0 0 1 .8.4L15.3 5h2.2A2.5 2.5 0 0 1 20 7.5v9a2.5 2.5 0 0 1-2.5 2.5h-11A2.5 2.5 0 0 1 4 16.5z"/><circle cx="12" cy="12" r="3.5"/></svg>
+        <p class="dz-title">写真やフォルダをここにドロップ</p>
+        <p class="dz-sub">JPEG・HEIC・RAW（CR3 / CR2 / NEF / ARW / RAF / ORF / RW2 / DNG など）に対応。何千枚でもまとめて読み込めます。</p>
+        <div class="dz-actions">
+          <label class="btn primary">
+            フォルダを選択
+            <input type="file" id="pick-folder" webkitdirectory multiple class="visually-hidden">
+          </label>
+          <label class="btn">
+            ファイルを選択
+            <input type="file" id="pick-files" multiple class="visually-hidden"
+              accept="image/*,.heic,.heif,.hif,.avif,.dng,.cr2,.cr3,.nef,.nrw,.arw,.srf,.sr2,.orf,.rw2,.raf,.pef,.srw,.3fr,.erf,.iiq,.mef,.mos,.kdc,.dcr,.tif,.tiff">
+          </label>
+          <button id="demo-btn" class="btn ghost" type="button">デモデータで試す</button>
+        </div>
+        <p class="privacy">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="10.5" width="14" height="10" rx="2"/><path d="M8 10.5V8a4 4 0 0 1 8 0v2.5"/></svg>
+          写真はアップロードされません。解析はすべてこのブラウザの中で行われます。
+        </p>
+      </div>
+
+      <div id="progress" class="progress" hidden>
+        <div class="progress-row">
+          <span id="progress-text" aria-live="polite"></span>
+          <button id="cancel-btn" class="btn small" type="button">中止</button>
+        </div>
+        <div class="progress-track"><div id="progress-bar" class="progress-bar"></div></div>
+      </div>
+
+      <div id="summary" class="summary" hidden>
+        <p id="summary-text"></p>
+        <div class="summary-actions">
+          <button id="export-btn" class="btn small" type="button">CSVを書き出す</button>
+          <button id="clear-btn" class="btn small ghost" type="button">クリア</button>
+        </div>
+      </div>
+    </section>
+
+    <section id="dashboard" class="dashboard" hidden aria-label="分析結果">
+      <div class="filters" id="filters">
+        <div class="field">
+          <span class="field-label" id="f-period-label">期間</span>
+          <div class="daterange" role="group" aria-labelledby="f-period-label">
+            <input type="date" id="f-from" aria-label="開始日">
+            <span aria-hidden="true">–</span>
+            <input type="date" id="f-to" aria-label="終了日">
+          </div>
+        </div>
+        <label class="field">
+          <span class="field-label">カメラ</span>
+          <select id="f-camera"></select>
+        </label>
+        <label class="field">
+          <span class="field-label">レンズ</span>
+          <select id="f-lens"></select>
+        </label>
+        <div class="field">
+          <span class="field-label" id="f-basis-label">焦点距離の基準</span>
+          <div class="seg" role="radiogroup" aria-labelledby="f-basis-label" id="f-basis">
+            <button type="button" role="radio" data-value="eq">35mm換算</button>
+            <button type="button" role="radio" data-value="actual">実焦点距離</button>
+          </div>
+        </div>
+        <button id="f-reset" class="btn small ghost" type="button" hidden>条件をリセット</button>
+      </div>
+
+      <div class="kpis" id="kpis"></div>
+      <div class="cards" id="cards"></div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <p>EXIF Graph — 写真のファイル先頭のメタデータだけを読み取り、ブラウザ内で集計します。対応形式: JPEG / HEIC / HEIF / AVIF / TIFF / PNG / WebP / DNG / CR2 / CR3 / NEF / NRW / ARW / SR2 / ORF / RW2 / RAF / PEF / SRW / 3FR / ERF / IIQ など。</p>
+  </footer>
+</body>
+</html>

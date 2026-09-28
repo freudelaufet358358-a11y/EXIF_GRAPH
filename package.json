@@ -1,0 +1,14 @@
+{
+  "name": "exif-graph",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Analyze focal length, aperture, shutter speed and ISO trends across large photo libraries, entirely in the browser.",
+  "type": "module",
+  "scripts": {
+    "test": "node --test tests/*.test.mjs",
+    "serve": "python3 -m http.server 8000 --directory site"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
